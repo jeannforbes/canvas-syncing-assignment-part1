@@ -1,13 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://npmcdn.com/babel-core@5.8.38/browser.min.js"></script>
     <script type="text/babel" >
         "use strict";
+
+        let container;
+
+        const connectSocket = () => {
+            let sock = io.connect();
+
+            sock.on('connect', () => {
+                console.log('connecting');
+
+                sock.emit('updatePara', {message:'Hiya', id:sock.id});
+            });
+
+            sock.on('updatePara', (data) => {
+                let para = document.querySelector('#_'+data.id);
+                if(!para){
+                    para = document.createElement('p');
+                    para.id = '_'+data.id;
+                    container.appendChild(para);
+                }
+                if(sock.id === data.id){
+                    para.innerHTML = 'ME: '+data.message;
+                } else{
+                    para.innerHTML = data.id+': '+data.message;
+                }
+            });
+
+            sock.on('clearPara', (data) => {
+                let para = document.querySelector('#_'+data);
+                if(!para){
+                    para = document.createElement('p');
+                    para.id = '_'+data.id;
+                    container.appendChild(para);
+                }
+                para.innerHTML = '';
+            });
+
+            setInterval(function(){
+                let date = new Date();
+                let dateTime = date.getHours()+' : '+date.getMinutes()+' : '+date.getSeconds();
+                sock.emit('updatePara', {message: dateTime, id:sock.id});
+            }, 1000);
+        };
+
+        const init = () => {
+            container = document.querySelector('#container');
+
+            connectSocket();
+        };
+
+        window.onload = init;
     
     </script>
 </head>
 <body>
-
+<div id='container'></div>
 </body>
 </html>
